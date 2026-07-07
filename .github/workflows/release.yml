@@ -47,12 +47,14 @@ jobs:
           MOZILLA_JWT_ISSUER: ${{ secrets.MOZILLA_JWT_ISSUER }}
           MOZILLA_JWT_SECRET: ${{ secrets.MOZILLA_JWT_SECRET }}
         run: |
+          echo '{"version":{"license":"MIT"},"categories":{"firefox":["feeds-news-blogging"]}}' > /tmp/amo-metadata.json
           npx web-ext sign \
             --source-dir extension/ \
             --artifacts-dir dist/ \
             --api-key "$MOZILLA_JWT_ISSUER" \
             --api-secret "$MOZILLA_JWT_SECRET" \
-            --channel unlisted || \
+            --channel listed \
+            --amo-metadata /tmp/amo-metadata.json || \
           echo "::warning::Firefox signing failed (version may already exist on AMO). Skipping."
           XPI=$(find dist -name '*.xpi' ! -name 'feed-focuser-firefox.xpi' | head -1)
           [ -n "$XPI" ] && mv "$XPI" dist/feed-focuser-firefox.xpi || true
