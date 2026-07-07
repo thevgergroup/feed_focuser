@@ -54,8 +54,8 @@ jobs:
             --api-secret "$MOZILLA_JWT_SECRET" \
             --channel unlisted || \
           echo "::warning::Firefox signing failed (version may already exist on AMO). Skipping."
-          XPI=$(find dist -name '*.xpi' | head -1)
-          [ -n "$XPI" ] && mv "$XPI" dist/feed-focuser-firefox.xpi
+          XPI=$(find dist -name '*.xpi' ! -name 'feed-focuser-firefox.xpi' | head -1)
+          [ -n "$XPI" ] && mv "$XPI" dist/feed-focuser-firefox.xpi || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
