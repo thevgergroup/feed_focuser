@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g. 1.0.2)'
+        description: 'Version to publish (e.g. 1.0.7)'
         required: true
 
 jobs:
@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Chrome zip
+      - name: Build artifacts
         run: npm run build
 
       - name: Publish to Chrome Web Store
@@ -30,7 +30,6 @@ jobs:
           CWS_CLIENT_EMAIL: ${{ secrets.CWS_CLIENT_EMAIL }}
           CWS_PRIVATE_KEY: ${{ secrets.CWS_PRIVATE_KEY }}
           CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
-          VERSION: ${{ github.event.inputs.version }}
         run: |
           pip install cryptography --quiet
 
