@@ -12,7 +12,7 @@ A browser extension that cleans up your professional network feed — collapsing
 
 ### Chrome / Edge / Brave
 
-1. Go to the [Releases](https://github.com/pjaol/feed_focuser/releases) page and download `feed-focuser-chrome.zip`
+1. Go to the [Releases](https://github.com/thevgergroup/feed_focuser/releases) page and download `feed-focuser-chrome.zip`
 2. Unzip it anywhere on your computer
 3. Open Chrome and go to `chrome://extensions`
 4. Turn on **Developer mode** (top-right toggle)
@@ -21,7 +21,7 @@ A browser extension that cleans up your professional network feed — collapsing
 
 ### Firefox
 
-1. Go to the [Releases](https://github.com/pjaol/feed_focuser/releases) page and download `feed-focuser-firefox.xpi`
+1. Go to the [Releases](https://github.com/thevgergroup/feed_focuser/releases) page and download `feed-focuser-firefox.xpi`
 2. Open Firefox and go to `about:addons`
 3. Click the gear icon → **Install Add-on From File…**
 4. Select the downloaded `.xpi` file
@@ -32,7 +32,9 @@ A browser extension that cleans up your professional network feed — collapsing
 
 ## What it does
 
-When you open your LinkedIn feed, Feed Focuser collapses filtered posts into a slim strip showing what was caught and why. Click the arrow on any strip to expand and read the post.
+<img src="assets/screenshot.png" alt="Feed Focuser in action — LinkedIn feed with filtered posts collapsed into labelled strips, popup open showing settings" width="100%">
+
+When you open your feed, Feed Focuser collapses filtered posts into a slim strip showing what was caught and why. Click the arrow on any strip to expand and read the post.
 
 | Strip colour | What was caught |
 |---|---|
@@ -48,6 +50,8 @@ You can switch from collapsed strips to complete hiding in the extension popup.
 
 ## Settings
 
+<img src="assets/popup.png" alt="Feed Focuser popup" align="right" width="220" style="margin: 0 0 16px 24px;">
+
 Click the Feed Focuser icon in your browser toolbar to open the popup.
 
 **Hide by keyword** — type a word and press Enter to hide any post containing that text. Great for filtering out topics like "AI", "crypto", or "layoffs" when your feed gets overrun.
@@ -58,7 +62,9 @@ Click the Feed Focuser icon in your browser toolbar to open the popup.
 
 **Collapse / hide** — "Collapse filtered posts" (on by default) shows filtered items as slim strips. Turn it off to hide them completely.
 
-**Learned labels** — as you scroll, Feed Focuser learns the exact label text LinkedIn uses for ads in your region and language (e.g. "Promoted · Partnership with X", "Patrocinado"). Once a label appears on 3+ ad cards it shows up here so you can toggle it on or off.
+**Learned labels** — as you scroll, Feed Focuser learns the exact label text your region and language uses for ads (e.g. "Promoted · Partnership with X", "Patrocinado"). Once a label appears on 3+ ad cards it shows up here so you can toggle it on or off.
+
+<br clear="right">
 
 ---
 
@@ -71,28 +77,10 @@ Click the Feed Focuser icon in your browser toolbar to open the popup.
 
 ---
 
-## Build from source
-
-```bash
-git clone https://github.com/pjaol/feed_focuser.git
-cd feed_focuser
-npm install
-npm test          # run unit tests
-npm run lint      # check code quality
-```
-
-The `extension/` folder is the unpacked extension — load it directly in Chrome via **Load unpacked**.
-
-To build the distributable artifacts:
-
-```bash
-npm run build
-```
-
-This produces `dist/feed-focuser-chrome.zip` and `dist/feed-focuser-firefox.xpi`.
-
----
-
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+---
+
+*For build instructions and developer setup, see [DEV.md](DEV.md).*
