@@ -1,0 +1,35 @@
+{
+  "name": "linkedin-feed-focuser",
+  "version": "1.0.0",
+  "description": "Heuristic browser extension that filters ads and noise from the LinkedIn feed",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint extension/content.js extension/popup.js",
+    "lint:fix": "eslint extension/content.js extension/popup.js --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "deadcode": "knip",
+    "build": "node scripts/build.mjs",
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "extension/*.js": [
+      "eslint --fix",
+      "bash -c 'vitest run --reporter=verbose'"
+    ]
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^9.0.0",
+    "globals": "^17.7.0",
+    "happy-dom": "^20.10.6",
+    "knip": "^5.0.0",
+    "lint-staged": "^15.0.0",
+    "simple-git-hooks": "^2.11.0",
+    "vitest": "^2.0.0"
+  }
+}

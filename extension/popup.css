@@ -1,0 +1,499 @@
+/* ============================================================
+   LinkedIn Feed Focuser — popup.css
+   Self-contained, no external fonts or CDN dependencies.
+   ============================================================ */
+
+/* CSS custom properties — easy to theme */
+:root {
+  --color-accent:       #0077B5;   /* LinkedIn blue */
+  --color-accent-dark:  #005f94;
+  --color-accent-light: #e8f4fb;
+  --color-bg:           #ffffff;
+  --color-surface:      #f8f9fa;
+  --color-border:       #e2e8f0;
+  --color-text-primary: #1a202c;
+  --color-text-secondary: #64748b;
+  --color-text-muted:   #94a3b8;
+  --color-toggle-off:   #cbd5e1;
+  --color-toggle-on:    var(--color-accent);
+  --color-toggle-thumb: #ffffff;
+  --radius-sm:          4px;
+  --radius-md:          8px;
+  --radius-full:        9999px;
+  --shadow-sm:          0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --transition-base:    0.18s ease;
+  --font-sans:          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                        Helvetica, Arial, sans-serif;
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Base */
+body {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  width: 300px;
+  min-height: 100px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Container ---- */
+.popup-container {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+}
+
+/* ---- Header ---- */
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.header-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.header-icon img {
+  display: block;
+  border-radius: 6px;
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.header-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.header-subtitle {
+  font-size: 11px;
+  color: rgba(255,255,255,0.75);
+  line-height: 1;
+}
+
+/* ---- Toggle section ---- */
+.toggle-section {
+  padding: 4px 0;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  gap: 12px;
+  transition: background var(--transition-base);
+}
+
+.toggle-row:hover {
+  background: var(--color-surface);
+}
+
+.toggle-row--secondary {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.toggle-label-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.toggle-desc {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Toggle switch (CSS-only animation) ---- */
+.toggle-switch {
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Hide the native checkbox visually but keep it accessible */
+.toggle-switch input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.toggle-track {
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-toggle-off);
+  position: relative;
+  transition: background var(--transition-base);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.12);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-toggle-thumb);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-base);
+}
+
+/* Checked state */
+.toggle-switch input:checked + .toggle-track {
+  background: var(--color-toggle-on);
+}
+
+.toggle-switch input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(16px);
+}
+
+/* Focus ring — keyboard accessibility */
+.toggle-switch input:focus-visible + .toggle-track {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Smaller variant for debug row */
+.toggle-switch--small .toggle-track {
+  width: 30px;
+  height: 17px;
+}
+
+.toggle-switch--small .toggle-thumb {
+  width: 13px;
+  height: 13px;
+}
+
+.toggle-switch--small input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(13px);
+}
+
+/* ---- Divider ---- */
+.divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 2px 0;
+}
+
+/* ---- Secondary section ---- */
+.secondary-section {
+  padding: 4px 0;
+}
+
+/* ---- Stats row ---- */
+.stats-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px 10px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.stats-icon {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.stats-label {
+  color: var(--color-text-secondary);
+}
+
+.stats-count {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-accent);
+  min-width: 24px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Footer ---- */
+.popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.footer-version {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.footer-tagline {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  letter-spacing: 0.1px;
+}
+
+/* ---- Diagnose button ---- */
+.diag-row {
+  padding: 4px 16px 8px;
+}
+
+.btn-diagnose {
+  width: 100%;
+  padding: 7px 12px;
+  background: var(--color-surface);
+  color: var(--color-accent);
+  border: 1.5px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-base), color var(--transition-base);
+  text-align: center;
+}
+
+.btn-diagnose:hover {
+  background: var(--color-accent-light);
+}
+
+.btn-diagnose:active {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* ---- Keyword filter section ---- */
+.keyword-section {
+  padding: 8px 0 10px;
+  background: var(--color-accent-light);
+  border-bottom: 1.5px solid #c8e0f0;
+}
+
+.keyword-section .section-label {
+  color: var(--color-accent-dark);
+}
+
+.keyword-input-row {
+  padding: 4px 16px 6px;
+}
+
+.keyword-input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1.5px solid #a8cfe8;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  outline: none;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.keyword-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 119, 181, 0.12);
+}
+
+.keyword-input::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.keyword-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 16px 4px;
+  min-height: 0;
+}
+
+.kw-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--color-accent-light);
+  color: var(--color-accent-dark);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kw-tag-del {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity var(--transition-base);
+}
+
+.kw-tag-del:hover {
+  opacity: 1;
+}
+
+/* ---- Section label inside a toggle-section ---- */
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding: 8px 16px 2px;
+}
+
+/* ---- Disabled state for rows (when extension is not on a LinkedIn feed page) ---- */
+.toggle-row.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ---- Loading shimmer while async storage reads ---- */
+@keyframes shimmer {
+  0%   { opacity: 0.4; }
+  50%  { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+.is-loading .stats-count {
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+/* ---- Learned labels section ---- */
+.learned-section {
+  padding: 4px 0 8px;
+}
+
+.learned-desc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  padding: 2px 16px 6px;
+  line-height: 1.4;
+}
+
+.learned-count {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 10px;
+}
+
+.learned-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 16px;
+}
+
+.learned-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.learned-row:last-child {
+  border-bottom: none;
+}
+
+.learned-label-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.learned-label-text {
+  font-size: 12px;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.learned-label-count {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+.learned-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.learned-remove {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-base), background var(--transition-base);
+}
+
+.learned-remove:hover {
+  color: #e53e3e;
+  background: #fff5f5;
+}

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Background with subtle gradient effect via layered rects -->
+  <rect width="128" height="128" rx="22" fill="#0077B5"/>
+  <rect width="128" height="128" rx="22" fill="url(#grad)" opacity="0.3"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#0077B5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Feed card representations -->
+  <!-- Card 1 — faded (hidden/filtered) -->
+  <rect x="20" y="28" width="88" height="18" rx="5" fill="white" opacity="0.25"/>
+  <!-- Card 2 — active/focused (bright) -->
+  <rect x="20" y="55" width="88" height="18" rx="5" fill="white" opacity="0.95"/>
+  <!-- Card 3 — faded -->
+  <rect x="20" y="82" width="60" height="18" rx="5" fill="white" opacity="0.25"/>
+
+  <!-- Focus indicator circle on active card -->
+  <circle cx="98" cy="64" r="14" fill="#7DD3FC"/>
+  <!-- Checkmark -->
+  <path d="M92 64l4 4 8-8" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- Small text lines inside card 2 to suggest content -->
+  <rect x="28" y="61" width="40" height="3" rx="1.5" fill="#0077B5" opacity="0.4"/>
+  <rect x="28" y="67" width="28" height="3" rx="1.5" fill="#0077B5" opacity="0.25"/>
+</svg>

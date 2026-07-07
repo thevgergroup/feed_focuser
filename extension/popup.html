@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkedIn Feed Focuser</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="header-icon" aria-hidden="true">
+        <img src="icons/icon48.png" width="28" height="28" alt="">
+      </div>
+      <div class="header-text">
+        <h1 class="header-title">Feed Focuser</h1>
+        <p class="header-subtitle">for LinkedIn</p>
+      </div>
+    </header>
+
+    <!-- Keyword filter — top of popup for quick access -->
+    <section class="keyword-section" aria-label="Keyword filters">
+      <div class="section-label">Hide by keyword</div>
+      <div class="keyword-input-row">
+        <input
+          type="text"
+          id="keyword-input"
+          class="keyword-input"
+          placeholder="e.g. AI, crypto, layoffs…"
+          aria-label="Add keyword to hide"
+          autocomplete="off"
+          spellcheck="false"
+        >
+      </div>
+      <div id="keyword-tags" class="keyword-tags" role="list" aria-label="Active keyword filters"></div>
+    </section>
+
+    <div class="divider" role="separator"></div>
+
+    <!-- Main toggles -->
+    <section class="toggle-section" aria-label="Filter settings">
+      <div class="toggle-row" id="row-ads">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Hide Ads</span>
+          <span class="toggle-desc">Promoted and sponsored posts</span>
+        </div>
+        <label class="toggle-switch" for="toggle-ads">
+          <input type="checkbox" id="toggle-ads" data-config-key="hideAds" role="switch" aria-label="Hide ads">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row" id="row-suggested">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Hide Suggested</span>
+          <span class="toggle-desc">People you may know, pages</span>
+        </div>
+        <label class="toggle-switch" for="toggle-suggested">
+          <input type="checkbox" id="toggle-suggested" data-config-key="hideSuggested" role="switch" aria-label="Hide suggested content">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row" id="row-news">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Hide News</span>
+          <span class="toggle-desc">LinkedIn News and trending topics</span>
+        </div>
+        <label class="toggle-switch" for="toggle-news">
+          <input type="checkbox" id="toggle-news" data-config-key="hideNews" role="switch" aria-label="Hide news">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row" id="row-promoted">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Hide Promoted</span>
+          <span class="toggle-desc">Recommended content &amp; Premium upsells</span>
+        </div>
+        <label class="toggle-switch" for="toggle-promoted">
+          <input type="checkbox" id="toggle-promoted" data-config-key="hidePromoted" role="switch" aria-label="Hide promoted content">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row" id="row-promoted-connections">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Hide sponsored from connections</span>
+          <span class="toggle-desc">Ads from 2nd/3rd degree connections</span>
+        </div>
+        <label class="toggle-switch" for="toggle-promoted-connections">
+          <input type="checkbox" id="toggle-promoted-connections" data-config-key="hidePromotedConnections" role="switch" aria-label="Hide promoted posts from connections">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row" id="row-page-posts">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Hide page/brand posts</span>
+          <span class="toggle-desc">Company pages pushed into your feed</span>
+        </div>
+        <label class="toggle-switch" for="toggle-page-posts">
+          <input type="checkbox" id="toggle-page-posts" data-config-key="hidePagePosts" role="switch" aria-label="Hide company page posts">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row" id="row-sidebar-ads">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Hide sidebar ads</span>
+          <span class="toggle-desc">Promoted ads in the right column</span>
+        </div>
+        <label class="toggle-switch" for="toggle-sidebar-ads">
+          <input type="checkbox" id="toggle-sidebar-ads" data-config-key="hideSidebarAds" role="switch" aria-label="Hide sidebar ads">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <div class="divider" role="separator"></div>
+
+    <!-- Connection degree controls -->
+    <section class="toggle-section" aria-label="Connection degree filters">
+      <div class="section-label">Connection degree</div>
+
+      <div class="toggle-row" id="row-2nd-degree">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Filter 2nd-degree posts</span>
+          <span class="toggle-desc">Posts from connections of connections</span>
+        </div>
+        <label class="toggle-switch" for="toggle-2nd-degree">
+          <input type="checkbox" id="toggle-2nd-degree" data-config-key="hide2ndDegree" role="switch" aria-label="Filter 2nd degree connection posts">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row" id="row-3rd-degree">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Filter 3rd-degree posts</span>
+          <span class="toggle-desc">Posts from distant connections</span>
+        </div>
+        <label class="toggle-switch" for="toggle-3rd-degree">
+          <input type="checkbox" id="toggle-3rd-degree" data-config-key="hide3rdDegree" role="switch" aria-label="Filter 3rd degree connection posts">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <div class="divider" role="separator"></div>
+
+    <!-- Learned labels -->
+    <section class="learned-section" aria-label="Automatically learned ad labels" id="learned-section">
+      <div class="section-label">Learned labels
+        <span class="learned-count" id="learned-count"></span>
+      </div>
+      <p class="learned-desc">Labels spotted on ads — toggle to enable/disable each signal.</p>
+      <div id="learned-labels" class="learned-labels" role="list"></div>
+    </section>
+
+    <div class="divider" role="separator"></div>
+
+    <!-- Debug + Stats -->
+    <section class="secondary-section" aria-label="Advanced options and statistics">
+      <div class="toggle-row toggle-row--secondary">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Collapse filtered posts</span>
+          <span class="toggle-desc">Show as a strip instead of hiding completely</span>
+        </div>
+        <label class="toggle-switch toggle-switch--small" for="toggle-collapse-mode">
+          <input type="checkbox" id="toggle-collapse-mode" data-config-key="collapseMode" role="switch" aria-label="Collapse filtered posts instead of hiding">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row toggle-row--secondary">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Debug overlay</span>
+          <span class="toggle-desc">Show classification scores on items</span>
+        </div>
+        <label class="toggle-switch toggle-switch--small" for="toggle-debug">
+          <input type="checkbox" id="toggle-debug" data-config-key="debugOverlay" role="switch" aria-label="Show debug overlay">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="diag-row">
+        <button id="btn-diagnose" class="btn-diagnose">Inspect feed detection</button>
+      </div>
+
+      <div class="stats-row" role="status" aria-live="polite">
+        <span class="stats-icon" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M7 4v4l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="stats-label">Cleaned today:</span>
+        <span class="stats-count" id="stats-count">—</span>
+        <span class="stats-label">items</span>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <span class="footer-version">v1.0.0</span>
+      <span class="footer-tagline">Runs locally · No data collected</span>
+    </footer>
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
