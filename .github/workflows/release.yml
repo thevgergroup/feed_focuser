@@ -8,9 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +26,55 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Extract version from manifest
+        id: version
+        run: echo "version=$(node -p "require('./extension/manifest.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tag matches manifest version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          MANIFEST="${{ steps.version.outputs.version }}"
+          if [ "$TAG" != "$MANIFEST" ]; then
+            echo "Tag $TAG does not match manifest version $MANIFEST"
+            exit 1
+          fi
+
       - name: Build artifacts
         run: npm run build
+
+      - name: Sign Firefox XPI
+        env:
+          MOZILLA_JWT_ISSUER: ${{ secrets.MOZILLA_JWT_ISSUER }}
+          MOZILLA_JWT_SECRET: ${{ secrets.MOZILLA_JWT_SECRET }}
+        run: |
+          npx web-ext sign \
+            --source-dir extension/ \
+            --artifacts-dir dist/ \
+            --api-key "$MOZILLA_JWT_ISSUER" \
+            --api-secret "$MOZILLA_JWT_SECRET" \
+            --channel listed || \
+          echo "::warning::Firefox signing failed (version may already exist on AMO). Skipping."
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: feed-focuser-${{ steps.version.outputs.version }}
+          path: dist/
+          retention-days: 30
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: feed-focuser-${{ needs.build.outputs.version }}
+          path: dist/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
