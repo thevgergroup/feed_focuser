@@ -14,7 +14,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Install dependencies
         run: npm ci
@@ -25,7 +25,7 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Build zips
+      - name: Build artifacts
         run: npm run build
 
       - name: Create GitHub Release
@@ -33,5 +33,5 @@ jobs:
         with:
           files: |
             dist/feed-focuser-chrome.zip
-            dist/feed-focuser-firefox.zip
+            dist/feed-focuser-firefox.xpi
           generate_release_notes: true

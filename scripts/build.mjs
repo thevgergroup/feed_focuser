@@ -20,9 +20,9 @@ const chromeZip = join(distDir, 'feed-focuser-chrome.zip');
 execSync(`cd "${root}" && zip -r "${chromeZip}" extension/ -x "*.DS_Store"`, { stdio: 'inherit' });
 console.log(`✓ ${chromeZip}`);
 
-// Firefox build — same source, manifest already has gecko settings
-const firefoxZip = join(distDir, 'feed-focuser-firefox.zip');
-execSync(`cd "${root}" && zip -r "${firefoxZip}" extension/ -x "*.DS_Store"`, { stdio: 'inherit' });
-console.log(`✓ ${firefoxZip}`);
+// Firefox build — XPI is a renamed ZIP; manifest already has gecko settings
+const firefoxXpi = join(distDir, 'feed-focuser-firefox.xpi');
+execSync(`cd "${root}" && zip -r "${firefoxXpi}" extension/ -x "*.DS_Store"`, { stdio: 'inherit' });
+console.log(`✓ ${firefoxXpi}`);
 
 console.log('\nBuild complete. Files in dist/');

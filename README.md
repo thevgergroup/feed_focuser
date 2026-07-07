@@ -19,7 +19,7 @@ A browser extension that cleans up your LinkedIn feed — collapsing or hiding a
 
 ### Firefox
 
-1. Go to the [Releases](https://github.com/pjaol/feed_focuser/releases) page and download `feed-focuser-firefox.zip`
+1. Go to the [Releases](https://github.com/pjaol/feed_focuser/releases) page and download `feed-focuser-firefox.xpi`
 2. Open Firefox and go to `about:addons`
 3. Click the gear icon → **Install Add-on From File…**
 4. Select the downloaded `.zip` file
@@ -87,7 +87,7 @@ To build the distributable zip files:
 npm run build
 ```
 
-This produces `dist/feed-focuser-chrome.zip` and `dist/feed-focuser-firefox.zip`.
+This produces `dist/feed-focuser-chrome.zip` and `dist/feed-focuser-firefox.xpi`.
 
 ---
 
