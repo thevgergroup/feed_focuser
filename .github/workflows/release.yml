@@ -42,14 +42,26 @@ jobs:
       - name: Build artifacts
         run: npm run build
 
-      - name: Submit Firefox XPI to AMO
+      - name: Sign Firefox XPI (unlisted) for immediate distribution
         env:
           MOZILLA_JWT_ISSUER: ${{ secrets.MOZILLA_JWT_ISSUER }}
           MOZILLA_JWT_SECRET: ${{ secrets.MOZILLA_JWT_SECRET }}
         run: |
-          # Submit to AMO and exit immediately — don't wait for review.
-          # Listed add-ons go through human review (hours to days); polling
-          # would burn Actions minutes. Mozilla emails when approved.
+          npx web-ext sign \
+            --source-dir extension/ \
+            --artifacts-dir dist/ \
+            --api-key "$MOZILLA_JWT_ISSUER" \
+            --api-secret "$MOZILLA_JWT_SECRET" \
+            --channel unlisted || \
+          echo "::warning::Firefox signing failed. Skipping."
+          XPI=$(find dist -name '*.xpi' ! -name 'feed-focuser-firefox.xpi' | head -1)
+          [ -n "$XPI" ] && mv "$XPI" dist/feed-focuser-firefox.xpi || true
+
+      - name: Submit Firefox XPI to AMO listed (fire and forget)
+        env:
+          MOZILLA_JWT_ISSUER: ${{ secrets.MOZILLA_JWT_ISSUER }}
+          MOZILLA_JWT_SECRET: ${{ secrets.MOZILLA_JWT_SECRET }}
+        run: |
           python3 << 'PYEOF'
           import os, time, json, hmac, hashlib, base64, uuid, urllib.request, urllib.error
 
@@ -57,7 +69,6 @@ jobs:
           secret = os.environ['MOZILLA_JWT_SECRET']
           addon_id = 'feedfocuser@thevgergroup.com'
 
-          # Mint a JWT for AMO API
           header  = base64.urlsafe_b64encode(json.dumps({"alg":"HS256","typ":"JWT"}).encode()).rstrip(b'=').decode()
           payload = base64.urlsafe_b64encode(json.dumps({
             "iss": issuer, "jti": str(uuid.uuid4()),
@@ -69,9 +80,6 @@ jobs:
           ).rstrip(b'=').decode()
           token = f"{msg}.{sig}"
 
-          headers = {"Authorization": f"JWT {token}"}
-
-          # Upload the XPI
           xpi_path = 'dist/feed-focuser-firefox.xpi'
           with open(xpi_path, 'rb') as f:
             xpi_data = f.read()
@@ -85,19 +93,18 @@ jobs:
           req = urllib.request.Request(
             f'https://addons.mozilla.org/api/v5/addons/{addon_id}/versions/',
             data=body,
-            headers={**headers, 'Content-Type': f'multipart/form-data; boundary={boundary}'},
+            headers={"Authorization": f"JWT {token}", 'Content-Type': f'multipart/form-data; boundary={boundary}'},
             method='POST'
           )
           try:
             resp = json.loads(urllib.request.urlopen(req).read())
-            print(f"Submitted to AMO: version {resp.get('version')}, status={resp.get('file',{}).get('status','unknown')}")
-            print("Mozilla will review and sign — you'll receive an email when approved.")
+            print(f"Submitted to AMO listed: version {resp.get('version')}, status={resp.get('file',{}).get('status','unknown')}")
           except urllib.error.HTTPError as e:
-            body = e.read().decode()
-            if 'already exists' in body or e.code == 409:
-              print(f"::warning::Version already exists on AMO, skipping.")
+            err = e.read().decode()
+            if 'already exists' in err or e.code == 409:
+              print("::warning::Version already exists on AMO listed, skipping.")
             else:
-              print(f"::warning::AMO submission failed ({e.code}): {body}")
+              print(f"::warning::AMO listed submission failed ({e.code}): {err}")
           PYEOF
 
       - name: Upload artifacts
@@ -126,4 +133,5 @@ jobs:
         with:
           files: |
             dist/feed-focuser-chrome.zip
+            dist/feed-focuser-firefox.xpi
           generate_release_notes: true
