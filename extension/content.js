@@ -564,10 +564,13 @@ const labelLearner = {
 
   // Patterns that are definitively noise regardless of content
   _NOISE: [
-    /^\d+[smhdw]\s*[•·]?$/,              // timestamps: "9h •", "2d"
+    /^\d+\s*[smhdw]\s*[•·]?$/,          // timestamps: "9h •", "2d", "3d •"
+    /^\d+\s*[smhdw]\s*[•·]/,            // "2d • something"
     /^[•·]\s*\d+[smhdw]/,               // "• 2d"
+    /^\d+\s*\/\s*\d+$/,                 // "1 / 4" slide indicators
     /^\d+\s*(reaction|comment|repost)/i, // "29 reactions"
     /^https?:\/\//,                      // URLs
+    /^lnkd\.in\//,                       // shortened LinkedIn URLs
     /^#\w+/,                             // hashtags
     /^\d[\d,]*\s*follower/i,             // "1,234 followers"
     /^\+?\s*follow$/i,                   // standalone follow button
@@ -586,13 +589,29 @@ const labelLearner = {
   _loadPromise: null, // single in-flight load so concurrent callers share it
   _saveTimer: null,
 
+  _isValidLabel(label) {
+    return (
+      typeof label === 'string' &&
+      label.length > 2 &&
+      label.length <= this.MAX_LABEL_LEN &&
+      !this._IGNORE.has(label) &&
+      !this._NOISE.some(re => re.test(label)) &&
+      this._PROMO_VOCAB.test(label)
+    );
+  },
+
   async _load() {
     if (this._cache) return this._cache;
     if (this._loadPromise) return this._loadPromise;
     this._loadPromise = new Promise((resolve) => {
       try {
         browser.storage.local.get({ learnedLabels: {} }, (result) => {
-          this._cache = result.learnedLabels || {};
+          const raw = result.learnedLabels || {};
+          // Scrub any entry that no longer passes current filters — handles
+          // stale data from earlier looser filter versions automatically.
+          this._cache = Object.fromEntries(
+            Object.entries(raw).filter(([label]) => this._isValidLabel(label))
+          );
           this._loadPromise = null;
           resolve(this._cache);
         });
@@ -633,13 +652,7 @@ const labelLearner = {
         .filter(n => n.nodeType === Node.TEXT_NODE)
         .map(n => n.textContent.trim())
         .join(' ').trim().toLowerCase();
-      if (
-        directText.length > 2 &&
-        directText.length <= this.MAX_LABEL_LEN &&
-        !this._IGNORE.has(directText) &&
-        !this._NOISE.some(re => re.test(directText)) &&
-        this._PROMO_VOCAB.test(directText)
-      ) {
+      if (this._isValidLabel(directText)) {
         labels.add(directText);
       }
     }
