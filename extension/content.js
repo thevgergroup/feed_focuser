@@ -743,17 +743,37 @@ const renderer = {
       // Build the accordion strip
       const strip = document.createElement('div');
       strip.className = 'lff-strip';
-      strip.innerHTML = `
-        <span class="lff-strip-label lff-cat-${category || 'unknown'}">${label}</span>
-        <span class="lff-strip-score">${pct}% match</span>
-        <button class="lff-strip-btn" aria-label="Show filtered post" aria-expanded="false">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      `;
 
-      const btn = strip.querySelector('.lff-strip-btn');
+      const labelSpan = document.createElement('span');
+      labelSpan.className = `lff-strip-label lff-cat-${category || 'unknown'}`;
+      labelSpan.textContent = label;
+
+      const scoreSpan = document.createElement('span');
+      scoreSpan.className = 'lff-strip-score';
+      scoreSpan.textContent = `${pct}% match`;
+
+      const btn = document.createElement('button');
+      btn.className = 'lff-strip-btn';
+      btn.setAttribute('aria-label', 'Show filtered post');
+      btn.setAttribute('aria-expanded', 'false');
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '14');
+      svg.setAttribute('height', '14');
+      svg.setAttribute('viewBox', '0 0 14 14');
+      svg.setAttribute('fill', 'none');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', 'M3 5l4 4 4-4');
+      path.setAttribute('stroke', 'currentColor');
+      path.setAttribute('stroke-width', '1.8');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(path);
+      btn.appendChild(svg);
+
+      strip.appendChild(labelSpan);
+      strip.appendChild(scoreSpan);
+      strip.appendChild(btn);
+
       let expanded = false;
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1408,61 +1428,140 @@ const diagnosticPanel = {
       'border:1px solid #2d3748'
     ].join(';');
 
-    panel.innerHTML = `
-      <div style="padding:12px 14px 8px;border-bottom:1px solid #2d3748;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-weight:700;color:#63b3ed;font-size:13px;">&#x1F50D; LFF Diagnostics</span>
-        <button id="lff-diag-close" style="background:none;border:none;color:#718096;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;">&times;</button>
-      </div>
+    // Header row
+    const header = document.createElement('div');
+    header.style.cssText = 'padding:12px 14px 8px;border-bottom:1px solid #2d3748;display:flex;align-items:center;justify-content:space-between;';
+    const headerTitle = document.createElement('span');
+    headerTitle.style.cssText = 'font-weight:700;color:#63b3ed;font-size:13px;';
+    headerTitle.textContent = '🔍 LFF Diagnostics';
+    const closeBtn = document.createElement('button');
+    closeBtn.id = 'lff-diag-close';
+    closeBtn.style.cssText = 'background:none;border:none;color:#718096;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;';
+    closeBtn.textContent = '\xD7';
+    header.appendChild(headerTitle);
+    header.appendChild(closeBtn);
+    panel.appendChild(header);
 
-      <div style="padding:10px 14px;border-bottom:1px solid #2d3748;">
-        <div style="color:#a0aec0;margin-bottom:4px;">Feed container detected:</div>
-        <div style="color:#68d391;">${feedTag}</div>
-        <div style="color:#718096;font-size:11px;">
-          ${feedRect.width ? `${Math.round(feedRect.width)}×${Math.round(feedRect.height)}px` : 'no rect'}
-          &nbsp;·&nbsp;${feed.children.length} direct children
-        </div>
-      </div>
+    // Feed info row
+    const feedSection = document.createElement('div');
+    feedSection.style.cssText = 'padding:10px 14px;border-bottom:1px solid #2d3748;';
+    const feedLabel = document.createElement('div');
+    feedLabel.style.cssText = 'color:#a0aec0;margin-bottom:4px;';
+    feedLabel.textContent = 'Feed container detected:';
+    const feedTagEl = document.createElement('div');
+    feedTagEl.style.cssText = 'color:#68d391;';
+    feedTagEl.textContent = feedTag;
+    const feedInfo = document.createElement('div');
+    feedInfo.style.cssText = 'color:#718096;font-size:11px;';
+    feedInfo.textContent = feedRect.width
+      ? `${Math.round(feedRect.width)}\xD7${Math.round(feedRect.height)}px \xB7 ${feed.children.length} direct children`
+      : `no rect \xB7 ${feed.children.length} direct children`;
+    feedSection.appendChild(feedLabel);
+    feedSection.appendChild(feedTagEl);
+    feedSection.appendChild(feedInfo);
+    panel.appendChild(feedSection);
 
-      <div style="padding:10px 14px;border-bottom:1px solid #2d3748;">
-        <div style="color:#a0aec0;margin-bottom:6px;">Items found: <strong style="color:#fff;">${items.length}</strong></div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <span style="background:#e53e3e22;color:#fc8181;padding:2px 8px;border-radius:12px;">&#x1F6AB; ${hidden} hide</span>
-          <span style="background:#d69e2e22;color:#f6e05e;padding:2px 8px;border-radius:12px;">&#x25BC; ${collapsed} collapse</span>
-          <span style="background:#38a16922;color:#68d391;padding:2px 8px;border-radius:12px;">&#x2713; ${organic} organic</span>
-        </div>
-      </div>
+    // Counts row
+    const countsSection = document.createElement('div');
+    countsSection.style.cssText = 'padding:10px 14px;border-bottom:1px solid #2d3748;';
+    const countTitle = document.createElement('div');
+    countTitle.style.cssText = 'color:#a0aec0;margin-bottom:6px;';
+    countTitle.textContent = `Items found: ${items.length}`;
+    const countBadges = document.createElement('div');
+    countBadges.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;';
+    const mkBadge = (bg, color, text) => {
+      const s = document.createElement('span');
+      s.style.cssText = `background:${bg};color:${color};padding:2px 8px;border-radius:12px;`;
+      s.textContent = text;
+      return s;
+    };
+    countBadges.appendChild(mkBadge('#e53e3e22', '#fc8181', `🚫 ${hidden} hide`));
+    countBadges.appendChild(mkBadge('#d69e2e22', '#f6e05e', `▼ ${collapsed} collapse`));
+    countBadges.appendChild(mkBadge('#38a16922', '#68d391', `✓ ${organic} organic`));
+    countsSection.appendChild(countTitle);
+    countsSection.appendChild(countBadges);
+    panel.appendChild(countsSection);
 
-      <div style="padding:10px 14px;">
-        <div style="color:#a0aec0;margin-bottom:6px;">Item scores (top 20):</div>
-        ${scored.slice(0, 20).map(({ score, category, reasons, text }) => {
-          const pct = Math.round(score * 100);
-          const barColor = score >= currentConfig.threshold ? '#e53e3e'
-            : score >= currentConfig.collapseThreshold ? '#d69e2e' : '#38a169';
-          const label = score >= currentConfig.threshold ? '&#x1F6AB;'
-            : score >= currentConfig.collapseThreshold ? '&#x25BC;' : '&#x2713;';
-          return `
-            <div style="margin-bottom:8px;padding:6px 8px;background:#2d3748;border-radius:6px;">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-                <span>${label}</span>
-                <div style="flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;">
-                  <div style="width:${pct}%;height:100%;background:${barColor};transition:width 0.3s;"></div>
-                </div>
-                <span style="color:${barColor};font-weight:700;min-width:32px;text-align:right;">${pct}%</span>
-                <span style="color:#718096;font-size:10px;">${category || 'organic'}</span>
-              </div>
-              <div style="color:#a0aec0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
-                   title="${text.replace(/"/g, '&quot;')}">${text || '(no text)'}</div>
-              <div style="color:#4a5568;font-size:10px;margin-top:2px;">${reasons.slice(0, 2).join(' · ')}</div>
-            </div>`;
-        }).join('')}
-        ${scored.length === 0 ? '<div style="color:#4a5568;font-style:italic;">No items found — feed may still be loading</div>' : ''}
-      </div>
+    // Scored items list
+    const scoresSection = document.createElement('div');
+    scoresSection.style.cssText = 'padding:10px 14px;';
+    const scoresTitle = document.createElement('div');
+    scoresTitle.style.cssText = 'color:#a0aec0;margin-bottom:6px;';
+    scoresTitle.textContent = 'Item scores (top 20):';
+    scoresSection.appendChild(scoresTitle);
 
-      <div style="padding:8px 14px 12px;border-top:1px solid #2d3748;display:flex;gap:8px;">
-        <button id="lff-diag-refresh" style="flex:1;background:#2b4c7e;color:#90cdf4;border:none;border-radius:6px;padding:6px;cursor:pointer;font-family:monospace;font-size:11px;">&#x21BB; Refresh</button>
-        <button id="lff-diag-highlight" style="flex:1;background:#2d3748;color:#e2e8f0;border:none;border-radius:6px;padding:6px;cursor:pointer;font-family:monospace;font-size:11px;">&#x1F3AF; Highlight items</button>
-      </div>
-    `;
+    if (scored.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'color:#4a5568;font-style:italic;';
+      empty.textContent = 'No items found — feed may still be loading';
+      scoresSection.appendChild(empty);
+    } else {
+      scored.slice(0, 20).forEach(({ score, category, reasons, text }) => {
+        const pct = Math.round(score * 100);
+        const barColor = score >= currentConfig.threshold ? '#e53e3e'
+          : score >= currentConfig.collapseThreshold ? '#d69e2e' : '#38a169';
+        const labelChar = score >= currentConfig.threshold ? '🚫'
+          : score >= currentConfig.collapseThreshold ? '▼' : '✓';
+
+        const row = document.createElement('div');
+        row.style.cssText = 'margin-bottom:8px;padding:6px 8px;background:#2d3748;border-radius:6px;';
+
+        const rowHeader = document.createElement('div');
+        rowHeader.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px;';
+
+        const icon = document.createElement('span');
+        icon.textContent = labelChar;
+
+        const barWrap = document.createElement('div');
+        barWrap.style.cssText = 'flex:1;height:6px;background:#1a1a2e;border-radius:3px;overflow:hidden;';
+        const bar = document.createElement('div');
+        bar.style.cssText = `width:${pct}%;height:100%;background:${barColor};transition:width 0.3s;`;
+        barWrap.appendChild(bar);
+
+        const pctSpan = document.createElement('span');
+        pctSpan.style.cssText = `color:${barColor};font-weight:700;min-width:32px;text-align:right;`;
+        pctSpan.textContent = `${pct}%`;
+
+        const catSpan = document.createElement('span');
+        catSpan.style.cssText = 'color:#718096;font-size:10px;';
+        catSpan.textContent = category || 'organic';
+
+        rowHeader.appendChild(icon);
+        rowHeader.appendChild(barWrap);
+        rowHeader.appendChild(pctSpan);
+        rowHeader.appendChild(catSpan);
+
+        const textEl = document.createElement('div');
+        textEl.style.cssText = 'color:#a0aec0;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        textEl.setAttribute('title', text);
+        textEl.textContent = text || '(no text)';
+
+        const reasonsEl = document.createElement('div');
+        reasonsEl.style.cssText = 'color:#4a5568;font-size:10px;margin-top:2px;';
+        reasonsEl.textContent = reasons.slice(0, 2).join(' \xB7 ');
+
+        row.appendChild(rowHeader);
+        row.appendChild(textEl);
+        row.appendChild(reasonsEl);
+        scoresSection.appendChild(row);
+      });
+    }
+    panel.appendChild(scoresSection);
+
+    // Footer buttons
+    const footer = document.createElement('div');
+    footer.style.cssText = 'padding:8px 14px 12px;border-top:1px solid #2d3748;display:flex;gap:8px;';
+    const refreshBtn = document.createElement('button');
+    refreshBtn.id = 'lff-diag-refresh';
+    refreshBtn.style.cssText = 'flex:1;background:#2b4c7e;color:#90cdf4;border:none;border-radius:6px;padding:6px;cursor:pointer;font-family:monospace;font-size:11px;';
+    refreshBtn.textContent = '↻ Refresh';
+    const highlightBtn = document.createElement('button');
+    highlightBtn.id = 'lff-diag-highlight';
+    highlightBtn.style.cssText = 'flex:1;background:#2d3748;color:#e2e8f0;border:none;border-radius:6px;padding:6px;cursor:pointer;font-family:monospace;font-size:11px;';
+    highlightBtn.textContent = '🎯 Highlight items';
+    footer.appendChild(refreshBtn);
+    footer.appendChild(highlightBtn);
+    panel.appendChild(footer);
 
     document.body.appendChild(panel);
     this._el = panel;
