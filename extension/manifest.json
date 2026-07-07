@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "LinkedIn Feed Focuser",
-  "description": "Heuristically filters ads, promoted content, and suggested posts from your LinkedIn feed.",
+  "name": "Feed Focuser",
+  "description": "Collapses or hides ads, sponsored posts, and suggested content from your professional network feed.",
   "version": "1.0.0",
 
   "permissions": ["storage", "activeTab"],
@@ -34,7 +34,7 @@
 
   "browser_specific_settings": {
     "gecko": {
-      "id": "linkedin-feed-focuser@pjaol",
+      "id": "feedfocuser@thevgergroup.com",
       "strict_min_version": "109.0"
     }
   }

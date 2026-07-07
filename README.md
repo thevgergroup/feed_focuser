@@ -1,8 +1,10 @@
 # Feed Focuser
 
-A browser extension that cleans up your LinkedIn feed — collapsing or hiding ads, sponsored posts, "Recommended for you" suggestions, and other noise so you can focus on posts from people you actually follow.
+A browser extension that cleans up your professional network feed — collapsing or hiding ads, sponsored posts, "Recommended for you" suggestions, and other noise so you can focus on posts from people you actually follow.
 
 **Runs entirely in your browser. No data is collected or sent anywhere.**
+
+> Unofficial third-party tool. Not affiliated with or endorsed by LinkedIn Corporation.
 
 ---
 
