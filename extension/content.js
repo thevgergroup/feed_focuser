@@ -25,6 +25,7 @@ const DEFAULT_CONFIG = {
   hide3rdDegree: true,           // hide posts from 3rd+ degree connections (weaker organic signal)
   hiddenKeywords: [],            // user-defined topic keywords — posts matching any are hidden
   collapseMode: true,            // true = accordion strip (default), false = hide completely
+  sortByRecent: true,            // always switch feed sort to "Recent" instead of "Top"
   debugOverlay: false,
   threshold: 0.75,        // score >= threshold → filter
   collapseThreshold: 0.50 // score >= collapseThreshold → collapse (unused when collapseMode=false)
@@ -1070,7 +1071,66 @@ const stats = {
 };
 
 // ---------------------------------------------------------------------------
-// 10. Main orchestration
+// 10. Sort enforcer — keeps feed sorted by "Recent" instead of LinkedIn's
+//     default "Top". LinkedIn resets to "Top" on every page load and SPA
+//     navigation. We detect the sort button via its text content (not class
+//     names) and programmatically click "Recent" whenever "Top" appears.
+// ---------------------------------------------------------------------------
+
+const sortEnforcer = {
+  _mo: null,
+  _pending: false,
+
+  start() {
+    this._enforce();
+    if (this._mo) return;
+    this._mo = new MutationObserver(() => {
+      if (!this._pending) {
+        this._pending = true;
+        // Debounce — the DOM fires rapidly during feed hydration
+        setTimeout(() => { this._pending = false; this._enforce(); }, 300);
+      }
+    });
+    this._mo.observe(document.body, { childList: true, subtree: true });
+  },
+
+  stop() {
+    if (this._mo) { this._mo.disconnect(); this._mo = null; }
+  },
+
+  restart() {
+    this.stop();
+    this.start();
+  },
+
+  _getSortButton() {
+    return [...document.querySelectorAll('[role="button"]')]
+      .find(el => el.innerText.trim().startsWith('Sort by:'));
+  },
+
+  async _enforce() {
+    const btn = this._getSortButton();
+    if (!btn) return;
+    if (!btn.innerText.includes('Top')) return;
+
+    // Open the dropdown
+    btn.click();
+    await new Promise(r => setTimeout(r, 300));
+
+    // Find and click "Recent" menu item
+    const recent = [...document.querySelectorAll('[role="menuitem"], [role="option"], [role="radio"]')]
+      .find(el => el.innerText.trim() === 'Recent');
+    if (recent) {
+      recent.click();
+    } else {
+      // Fallback: close the dropdown if Recent wasn't found
+      btn.click();
+    }
+  },
+};
+
+// ---------------------------------------------------------------------------
+// 11. Main orchestration
 // ---------------------------------------------------------------------------
 
 let processed = new WeakSet();
@@ -1211,6 +1271,7 @@ async function initialize() {
     // Poll until we find feed items, up to 10 seconds.
     await waitForFeedAndProcess();
     sidebarAdRemover.start();
+    if (currentConfig.sortByRecent) sortEnforcer.start();
 
     // Listen for config updates from the popup
     if (!_initialized) {
@@ -1223,6 +1284,7 @@ async function initialize() {
           renderer.restoreAll();
           observer.stop();
           sidebarAdRemover.restart();
+          if (currentConfig.sortByRecent) sortEnforcer.restart(); else sortEnforcer.stop();
           reprocess();
         } else if (msg.type === 'DIAGNOSE_TOGGLE') {
           diagnosticPanel.toggle();
@@ -1239,6 +1301,7 @@ async function initialize() {
             observer.stop();
             processed = new WeakSet();
             waitForFeedAndProcess();
+            if (currentConfig.sortByRecent) sortEnforcer.restart();
           }
         }
       }).observe(document.body, { childList: true, subtree: false });

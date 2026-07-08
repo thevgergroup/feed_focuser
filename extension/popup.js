@@ -19,6 +19,7 @@ const DEFAULT_CONFIG = {
   hide2ndDegree: false,
   hide3rdDegree: true,
   hiddenKeywords: [],
+  sortByRecent: true,
   collapseMode: true,
   debugOverlay: false
 };

@@ -183,6 +183,19 @@
     <section class="secondary-section" aria-label="Advanced options and statistics">
       <div class="toggle-row toggle-row--secondary">
         <div class="toggle-label-group">
+          <span class="toggle-label">Always sort by Recent</span>
+          <span class="toggle-desc">Prevent LinkedIn resetting to "Top" posts</span>
+        </div>
+        <label class="toggle-switch toggle-switch--small" for="toggle-sort-recent">
+          <input type="checkbox" id="toggle-sort-recent" data-config-key="sortByRecent" role="switch" aria-label="Always sort feed by most recent">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row toggle-row--secondary">
+        <div class="toggle-label-group">
           <span class="toggle-label">Collapse filtered posts</span>
           <span class="toggle-desc">Show as a strip instead of hiding completely</span>
         </div>
@@ -226,7 +239,7 @@
 
     <!-- Footer -->
     <footer class="popup-footer">
-      <span class="footer-version">v1.0.6</span>
+      <span class="footer-version">v1.0.7</span>
       <span class="footer-tagline">Runs locally · No data collected</span>
     </footer>
 
