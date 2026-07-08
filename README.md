@@ -4,6 +4,8 @@ A browser extension that cleans up your professional network feed — collapsing
 
 **Runs entirely in your browser. No data is collected or sent anywhere.**
 
+Read the [announcement post](https://thevgergroup.com/vger-for-good/feed-focuser/) on The Vger Group blog.
+
 > Unofficial third-party tool. Not affiliated with or endorsed by LinkedIn Corporation.
 
 ---
