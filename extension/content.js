@@ -23,6 +23,8 @@ const DEFAULT_CONFIG = {
   hideSidebarAds: true,          // hide promoted ads in the right-rail sidebar
   hide2ndDegree: false,          // treat 2nd-degree connection posts as organic (keep them)
   hide3rdDegree: true,           // hide posts from 3rd+ degree connections (weaker organic signal)
+  hideReshares: true,            // collapse low-engagement social reshares ("X likes this")
+  reshareEngagementThreshold: 10, // minimum total engagement (reactions+comments+reposts) to show a reshare
   hiddenKeywords: [],            // user-defined topic keywords — posts matching any are hidden
   collapseMode: true,            // true = accordion strip (default), false = hide completely
   sortByRecent: true,            // always switch feed sort to "Recent" instead of "Top"
@@ -394,6 +396,37 @@ const classifier = {
     return null;
   },
 
+  // Returns true if the card is a social reshare — someone in your network
+  // liked/celebrated/reposted a third-party post. Structural signal: the first
+  // direct child of the card contains both an <img> (the sharer's avatar) and
+  // short action text ending in "this".
+  _detectReshare(el) {
+    const firstChild = [...el.children].find(
+      c => !c.classList.contains('lff-strip') && !c.classList.contains('lff-card-content')
+    );
+    if (!firstChild) return false;
+    if (!firstChild.querySelector('img')) return false;
+    const text = (firstChild.innerText || '').trim();
+    return /\b(likes?|celebrates?|reposts?|shares?|comments? on|supports?|loves?) this\b/i.test(text);
+  },
+
+  // Sum visible engagement counts (reactions, comments, reposts) from the card.
+  // LinkedIn renders these as short numeric strings near the action row.
+  _countEngagement(el) {
+    let total = 0;
+    el.querySelectorAll('span, button, li').forEach(node => {
+      const direct = (node.innerText || '').trim();
+      // Match standalone counts: "12", "1.2K", "3K+" etc.
+      const m = direct.match(/^([\d]+(?:[.,]\d+)?)\s*[Kk]?\+?$/);
+      if (m) {
+        let val = parseFloat(m[1].replace(',', '.'));
+        if (/[Kk]/.test(direct)) val *= 1000;
+        total += val;
+      }
+    });
+    return total;
+  },
+
   score(el, config) {
     try {
       const text = textExtractor.extract(el);
@@ -425,6 +458,20 @@ const classifier = {
         // Connection found but user wants to keep promoted-connection posts
         // Fall through to normal scoring but note it
         add(0.5, 'has Promoted label (connection degree present, user setting: keep)');
+      }
+
+      // Reshare filter — "X likes/celebrates/reposts this" cards where the
+      // original post has low engagement. High-engagement reshares pass through.
+      if (config.hideReshares && this._detectReshare(el)) {
+        const engagement = this._countEngagement(el);
+        const threshold = config.reshareEngagementThreshold ?? 10;
+        if (engagement < threshold) {
+          return {
+            score: 1.0,
+            reasons: [`reshare with low engagement (${engagement} < ${threshold})`],
+            category: 'reshare'
+          };
+        }
       }
 
       // Positional top-of-card contextual label — LinkedIn places suggestion
@@ -799,6 +846,7 @@ const renderer = {
     news: 'News',
     promoted: 'Promoted',
     pagePosts: 'Brand post',
+    reshare: 'Reshare',
     keyword: 'Keyword match',
     unknown: 'Filtered',
   },
@@ -1240,7 +1288,8 @@ function categoryToConfigKey(category) {
     suggested: 'hideSuggested',
     news: 'hideNews',
     promoted: 'hidePromoted',
-    pagePosts: 'hidePagePosts'
+    pagePosts: 'hidePagePosts',
+    reshare: 'hideReshares'
   };
   return map[category] || 'hideSuggested';
 }
@@ -1335,6 +1384,7 @@ function injectStyles() {
     .lff-cat-news       { background: #fef9c3; color: #854d0e; }
     .lff-cat-promoted   { background: #fce7f3; color: #9d174d; }
     .lff-cat-pagePosts  { background: #ede9fe; color: #5b21b6; }
+    .lff-cat-reshare    { background: #fff7ed; color: #c2410c; }
     .lff-cat-keyword    { background: #dcfce7; color: #15803d; }
     .lff-cat-unknown    { background: #f1f5f9; color: #475569; }
     .lff-strip-score {

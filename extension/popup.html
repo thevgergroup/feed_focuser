@@ -119,6 +119,35 @@
         </label>
       </div>
 
+      <div class="toggle-row" id="row-reshares">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Filter low-engagement reshares</span>
+          <span class="toggle-desc">Hide "X likes this" posts below engagement threshold</span>
+        </div>
+        <label class="toggle-switch" for="toggle-reshares">
+          <input type="checkbox" id="toggle-reshares" data-config-key="hideReshares" role="switch" aria-label="Filter low-engagement reshares">
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+
+      <div class="toggle-row toggle-row--secondary" id="row-reshare-threshold">
+        <div class="toggle-label-group">
+          <span class="toggle-label">Min. engagement to show reshare</span>
+          <span class="toggle-desc">Reactions + comments + reposts combined</span>
+        </div>
+        <input
+          type="number"
+          id="reshare-threshold"
+          class="number-input"
+          min="0"
+          max="9999"
+          step="1"
+          aria-label="Minimum engagement threshold for reshares"
+        >
+      </div>
+
       <div class="toggle-row" id="row-sidebar-ads">
         <div class="toggle-label-group">
           <span class="toggle-label">Hide sidebar ads</span>

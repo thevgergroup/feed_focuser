@@ -18,6 +18,8 @@ const DEFAULT_CONFIG = {
   hideSidebarAds: true,
   hide2ndDegree: false,
   hide3rdDegree: true,
+  hideReshares: true,
+  reshareEngagementThreshold: 10,
   hiddenKeywords: [],
   sortByRecent: true,
   collapseMode: true,
@@ -45,6 +47,11 @@ async function loadAndRender() {
 
   for (const [key, el] of Object.entries(toggleEls)) {
     el.checked = !!config[key];
+  }
+
+  const thresholdInput = document.getElementById('reshare-threshold');
+  if (thresholdInput) {
+    thresholdInput.value = config.reshareEngagementThreshold ?? 10;
   }
 
   currentKeywords = Array.isArray(config.hiddenKeywords) ? config.hiddenKeywords : [];
@@ -190,6 +197,11 @@ function buildCurrentConfig() {
   for (const [key, el] of Object.entries(toggleEls)) {
     config[key] = el.checked;
   }
+  const thresholdInput = document.getElementById('reshare-threshold');
+  if (thresholdInput) {
+    const val = parseInt(thresholdInput.value, 10);
+    config.reshareEngagementThreshold = isNaN(val) ? 10 : Math.max(0, val);
+  }
   return config;
 }
 
@@ -261,6 +273,13 @@ function init() {
       saveAndBroadcast();
     });
   });
+
+  // Reshare threshold number input
+  const thresholdInput = document.getElementById('reshare-threshold');
+  if (thresholdInput) {
+    thresholdInput.addEventListener('change', () => saveAndBroadcast());
+    thresholdInput.addEventListener('input', () => saveAndBroadcast());
+  }
 
   // Keyword input: add on Enter or comma
   const kwInput = document.getElementById('keyword-input');

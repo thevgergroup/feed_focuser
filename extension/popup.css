@@ -322,6 +322,26 @@ body {
   padding: 4px 16px 6px;
 }
 
+.number-input {
+  width: 64px;
+  padding: 5px 8px;
+  border: 1.5px solid #a8cfe8;
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  outline: none;
+  text-align: right;
+  flex-shrink: 0;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.number-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(0, 119, 181, 0.12);
+}
+
 .keyword-input {
   width: 100%;
   padding: 7px 10px;
