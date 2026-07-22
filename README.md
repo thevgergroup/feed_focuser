@@ -44,7 +44,10 @@ When you open your feed, Feed Focuser collapses filtered posts into a slim strip
 | 🔵 **Suggested** | "Recommended for you", "People you may know" |
 | 🟡 **News** | LinkedIn News and trending topics |
 | 🟣 **Brand post** | Company pages pushed into your feed |
+| 🟠 **Reshare** | "X likes/celebrates this" posts below your engagement threshold |
 | 🟢 **Keyword match** | Posts containing your custom keywords |
+
+Each strip has an **Always show** button — click it to restore that card immediately without opening the popup.
 
 You can switch from collapsed strips to complete hiding in the extension popup.
 
@@ -58,11 +61,15 @@ Click the Feed Focuser icon in your browser toolbar to open the popup.
 
 **Hide by keyword** — type a word and press Enter to hide any post containing that text. Great for filtering out topics like "AI", "crypto", or "layoffs" when your feed gets overrun.
 
-**Filter toggles** — turn individual categories on or off (Ads, Suggested, News, etc.)
+**Filter toggles** — turn individual categories on or off (Ads, Suggested, News, Promoted, company page posts, sidebar ads, etc.)
+
+**Filter low-engagement reshares** — collapses "X likes/celebrates this" posts whose total engagement (reactions + comments + reposts) is below a configurable threshold (default: 10). High-engagement reshares pass through.
 
 **Connection degree** — choose whether posts from 2nd or 3rd-degree connections are treated as organic or filtered.
 
-**Collapse / hide** — "Collapse filtered posts" (on by default) shows filtered items as slim strips. Turn it off to hide them completely.
+**Always sort by Recent** — prevents LinkedIn from resetting your feed sort to "Top" on every page load.
+
+**Collapse / hide** — "Collapse filtered posts" (on by default) shows filtered items as slim strips with an **Always show** button for one-click restore. Turn it off to hide completely.
 
 **Learned labels** — as you scroll, Feed Focuser learns the exact label text your region and language uses for ads (e.g. "Promoted · Partnership with X", "Patrocinado"). Once a label appears on 3+ ad cards it shows up here so you can toggle it on or off.
 
