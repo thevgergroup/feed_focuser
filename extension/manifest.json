@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Feed Focuser",
   "description": "Collapses or hides ads, sponsored posts, and suggested content from your professional network feed.",
-  "version": "1.0.7",
+  "version": "1.0.8",
 
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["https://www.linkedin.com/*"],

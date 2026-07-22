@@ -9,6 +9,10 @@
 // Chrome/Firefox compatibility shim
 const browser = typeof chrome !== 'undefined' ? chrome : globalThis.browser;
 
+// Build marker — update this timestamp whenever content.js changes so we can
+// verify which version is running: document.querySelector('[data-lff-build]')?.dataset.lffBuild
+const LFF_BUILD = '2026-07-22T17:37';
+
 // ---------------------------------------------------------------------------
 // 1. Configuration
 // ---------------------------------------------------------------------------
@@ -399,26 +403,35 @@ const classifier = {
   // Returns true if the card is a social reshare — someone in your network
   // liked/celebrated/reposted a third-party post.
   //
-  // LinkedIn's reshare cards always have a social proof header row ("X likes
-  // this") somewhere near the top. We search the first 60 DOM nodes for an
-  // element that: (a) contains an <img> (the sharer's avatar), AND (b) whose
-  // direct text includes a social proof verb + "this". This is more robust than
-  // checking only the first direct child, which may be a large wrapper.
+  // LinkedIn's reshare header ("X likes this") is a short p/span element
+  // at the very top of the card but deeply nested (~476 walker steps in).
+  // Walking the tree with a node limit misses it. Instead: scan all short
+  // text nodes in the card for the social-proof verb pattern, then verify
+  // it's near the top of the card's text (within the first 120 chars of
+  // innerText) so we don't match body text like "I was promoted".
   _detectReshare(el) {
     const _RESHARE_RE = /\b(likes?|celebrates?|reposts?|shares?|comments? on|supports?|loves?) this\b/i;
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT);
+    // Scan all text nodes for the social-proof verb pattern. The header
+    // ("Seth Klebe celebrates this") lives in a short leaf text node.
+    // Guard: skip text nodes inside .lff-card-content (already-wrapped body).
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        let p = node.parentElement;
+        while (p && p !== el) {
+          if (p.classList?.contains('lff-card-content')) return NodeFilter.FILTER_REJECT;
+          p = p.parentElement;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
     let node = walker.nextNode();
     let visited = 0;
-    while (node && visited < 60) {
+    while (node && visited < 500) {
       visited++;
-      if (node.classList?.contains('lff-card-content')) {
-        // Skip already-wrapped content entirely
-        node = walker.nextNode();
-        continue;
-      }
-      if (node.querySelector('img')) {
-        const text = (node.innerText || '').trim();
-        if (_RESHARE_RE.test(text)) return true;
+      const txt = node.textContent.trim();
+      // Header is short: "X likes this" / "X celebrates this" (< 80 chars)
+      if (txt.length > 4 && txt.length < 80 && _RESHARE_RE.test(txt)) {
+        return true;
       }
       node = walker.nextNode();
     }
@@ -426,19 +439,34 @@ const classifier = {
   },
 
   // Sum visible engagement counts (reactions, comments, reposts) from the card.
-  // LinkedIn renders these as short numeric strings near the action row.
+  // LinkedIn renders each count in deeply nested spans AND duplicates it inside
+  // <a> link labels (accessibility text). Skip any numeric text node that lives
+  // inside an <a> to avoid double-counting.
   _countEngagement(el) {
     let total = 0;
-    el.querySelectorAll('span, button, li').forEach(node => {
-      const direct = (node.innerText || '').trim();
-      // Match standalone counts: "12", "1.2K", "3K+" etc.
-      const m = direct.match(/^([\d]+(?:[.,]\d+)?)\s*[Kk]?\+?$/);
-      if (m) {
-        let val = parseFloat(m[1].replace(',', '.'));
-        if (/[Kk]/.test(direct)) val *= 1000;
-        total += val;
+    const seenParents = new Set();
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const txt = node.textContent.trim();
+      const m = txt.match(/^([\d]+(?:[.,]\d+)?)\s*[Kk]?\+?$/);
+      if (m && !seenParents.has(node.parentElement)) {
+        seenParents.add(node.parentElement);
+        // Skip numbers inside <a> tags — LinkedIn repeats counts there as link labels
+        let inLink = false;
+        let p = node.parentElement;
+        while (p && p !== el) {
+          if (p.tagName === 'A') { inLink = true; break; }
+          p = p.parentElement;
+        }
+        if (!inLink) {
+          let val = parseFloat(m[1].replace(',', '.'));
+          if (/[Kk]/.test(txt)) val *= 1000;
+          total += val;
+        }
       }
-    });
+      node = walker.nextNode();
+    }
     return total;
   },
 
@@ -1374,6 +1402,7 @@ function injectStyles() {
   if (document.getElementById('lff-styles')) return;
   const style = document.createElement('style');
   style.id = 'lff-styles';
+  style.dataset.lffBuild = LFF_BUILD;
   style.textContent = `
     .lff-strip {
       display: flex;
