@@ -133,6 +133,8 @@ body {
   font-weight: 600;
   color: var(--color-text-primary);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .toggle-desc {
@@ -322,9 +324,13 @@ body {
   padding: 4px 16px 6px;
 }
 
+.toggle-row--number {
+  align-items: center;
+}
+
 .number-input {
-  width: 64px;
-  padding: 5px 8px;
+  width: 52px;
+  padding: 4px 6px;
   border: 1.5px solid #a8cfe8;
   border-radius: var(--radius-md);
   font-family: var(--font-sans);
@@ -332,7 +338,7 @@ body {
   color: var(--color-text-primary);
   background: var(--color-bg);
   outline: none;
-  text-align: right;
+  text-align: center;
   flex-shrink: 0;
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }

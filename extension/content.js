@@ -397,17 +397,32 @@ const classifier = {
   },
 
   // Returns true if the card is a social reshare — someone in your network
-  // liked/celebrated/reposted a third-party post. Structural signal: the first
-  // direct child of the card contains both an <img> (the sharer's avatar) and
-  // short action text ending in "this".
+  // liked/celebrated/reposted a third-party post.
+  //
+  // LinkedIn's reshare cards always have a social proof header row ("X likes
+  // this") somewhere near the top. We search the first 60 DOM nodes for an
+  // element that: (a) contains an <img> (the sharer's avatar), AND (b) whose
+  // direct text includes a social proof verb + "this". This is more robust than
+  // checking only the first direct child, which may be a large wrapper.
   _detectReshare(el) {
-    const firstChild = [...el.children].find(
-      c => !c.classList.contains('lff-strip') && !c.classList.contains('lff-card-content')
-    );
-    if (!firstChild) return false;
-    if (!firstChild.querySelector('img')) return false;
-    const text = (firstChild.innerText || '').trim();
-    return /\b(likes?|celebrates?|reposts?|shares?|comments? on|supports?|loves?) this\b/i.test(text);
+    const _RESHARE_RE = /\b(likes?|celebrates?|reposts?|shares?|comments? on|supports?|loves?) this\b/i;
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT);
+    let node = walker.nextNode();
+    let visited = 0;
+    while (node && visited < 60) {
+      visited++;
+      if (node.classList?.contains('lff-card-content')) {
+        // Skip already-wrapped content entirely
+        node = walker.nextNode();
+        continue;
+      }
+      if (node.querySelector('img')) {
+        const text = (node.innerText || '').trim();
+        if (_RESHARE_RE.test(text)) return true;
+      }
+      node = walker.nextNode();
+    }
+    return false;
   },
 
   // Sum visible engagement counts (reactions, comments, reposts) from the card.
