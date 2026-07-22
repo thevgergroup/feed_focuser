@@ -310,10 +310,8 @@ const classifier = {
    * where "promoted" appears inside long prose text.
    */
   _hasLabel(el, pattern) {
-    // Walk all elements and check those whose direct text content is short
     const nodes = [...el.querySelectorAll('span, div, p, li, a, strong, em, small')];
     for (const node of nodes) {
-      // Use direct text content of the node (not subtree) for leaf-like nodes
       const directText = [...node.childNodes]
         .filter(n => n.nodeType === Node.TEXT_NODE)
         .map(n => n.textContent.trim())
@@ -321,11 +319,79 @@ const classifier = {
         .trim();
       if (directText && directText.length < 80 && pattern.test(directText)) return true;
 
-      // Also check the full innerText of very short elements (badges)
       const full = (node.innerText || '').trim();
       if (full.length < 80 && pattern.test(full)) return true;
     }
     return false;
+  },
+
+  /**
+   * Return the first short contextual label at the top of a feed card, or null.
+   *
+   * LinkedIn places labels like "Promoted", "From your activity",
+   * "Because you follow X", "Recommended for you" as small text nodes near
+   * the very top of the card — before the author block. Rather than matching
+   * specific strings (whack-a-mole), we grab whatever text appears there and
+   * treat its presence as a non-organic signal. The label text is returned so
+   * it can be shown in the strip.
+   *
+   * We skip anything that looks like a connection degree badge, timestamp,
+   * or author name (long text), since those also appear near the top.
+   */
+  _getCardContextLabel(el) {
+    const _SKIP_RE = [
+      /\b(1st|2nd|3rd)\b/,                          // degree badges
+      /\b\d+\s*(s|m|h|d|w|mo)\b|\bjust now\b/i,     // timestamps
+      /^https?:\/\//,                                 // URLs
+      /^#\w+/,                                        // hashtags
+      /^\d[\d,]*$/,                                   // bare numbers
+    ];
+    const _SKIP_EXACT = new Set([
+      'sort by:', 'sort by', 'recent', 'top', 'new posts', 'feed post',
+      'start a post', 'video', 'photo', 'write article',
+    ]);
+
+    // Contextual labels always contain at least one of these function words or
+    // phrases. Job titles ("CTO at StartupCo"), company names, and person names
+    // won't match. This is a vocabulary gate, not a string allowlist — any new
+    // LinkedIn label variant that contains "your", "you", "for", "from",
+    // "because", "activity", "follow", "suggested", "recommended", "promoted",
+    // "sponsored", or "based on" will pass automatically.
+    const _CONTEXT_VOCAB = /\b(your|you|for you|from|because|activity|follow|suggested|recommended|promoted|sponsored|based on|partnership|newsletter|trending)\b/i;
+
+    // LinkedIn's contextual labels ("From your activity", "Promoted by X",
+    // "Recommended for you") live in a header row that contains NO avatar
+    // image — it's pure text/icon. Social proof rows ("Pedro celebrates this")
+    // always have a person avatar <img> in the same subtree.
+    //
+    // Strategy: walk the direct children of the card. For each child, if it
+    // contains an <img>, skip it entirely (social proof / author block).
+    // Only extract text from image-free children near the top.
+    for (const child of el.children) {
+      if (child.classList.contains('lff-strip') || child.classList.contains('lff-card-content')) continue;
+      if (child.querySelector('img')) continue; // social proof / author rows have avatars
+
+      const walker = document.createTreeWalker(child, NodeFilter.SHOW_ELEMENT);
+      let node = walker.nextNode();
+      let visited = 0;
+      while (node && visited < 20) {
+        visited++;
+        const direct = [...node.childNodes]
+          .filter(n => n.nodeType === Node.TEXT_NODE)
+          .map(n => n.textContent.trim())
+          .filter(Boolean)
+          .join(' ')
+          .trim();
+        if (direct.length > 2 && direct.length < 60) {
+          if (!_SKIP_RE.some(re => re.test(direct)) && !_SKIP_EXACT.has(direct.toLowerCase())
+              && _CONTEXT_VOCAB.test(direct)) {
+            return direct;
+          }
+        }
+        node = walker.nextNode();
+      }
+    }
+    return null;
   },
 
   score(el, config) {
@@ -361,18 +427,31 @@ const classifier = {
         add(0.5, 'has Promoted label (connection degree present, user setting: keep)');
       }
 
-      // "Recommended for you" is an explicit LinkedIn suggestion label — treat as
-      // definitive regardless of connection degree signals on the same card.
-      const hasRecommendedLabel = this._hasLabel(el,
-        /^(recommended for you|people you may know|suggested for you|sugerido para ti|recommandé pour vous|empfohlen für sie|suggerito per te|aanbevolen voor u)$/i
-      );
-      if (hasRecommendedLabel && config.hideSuggested) {
-        labelLearner.observe(el);
-        return {
-          score: 1.0,
-          reasons: ['definitive "Recommended for you" label detected'],
-          category: 'suggested'
-        };
+      // Positional top-of-card contextual label — LinkedIn places suggestion
+      // labels ("Recommended for you", "From your activity", "Because you
+      // follow X", etc.) as short text before the author block. We grab
+      // whatever is there rather than matching specific strings, so new label
+      // variants are caught automatically without code changes.
+      const cardContextLabel = this._getCardContextLabel(el);
+      if (cardContextLabel && config.hideSuggested) {
+        // Only treat as definitive if it doesn't look like a Promoted/Sponsored
+        // label (those are already handled above) and there's no connection
+        // degree signal co-present (a 1st-degree connection's post might have
+        // a short company name near the top).
+        const isAlreadyHandled = /^(promoted|sponsored)/i.test(cardContextLabel);
+        // Only skip if a 1st-degree connection is present — a genuine friend's
+        // post might have a short company name near the top that looks like a
+        // label. 2nd/3rd-degree presence in a "Recommended for you" card is
+        // normal and doesn't make it organic.
+        const has1stDegree = /\b1st\b/.test(text);
+        if (!isAlreadyHandled && !has1stDegree) {
+          labelLearner.observe(el);
+          return {
+            score: 1.0,
+            reasons: [`contextual label at top of card: "${cardContextLabel}"`],
+            category: 'suggested'
+          };
+        }
       }
 
       // Check learned labels — user-confirmed signals from prior sessions
@@ -582,7 +661,7 @@ const labelLearner = {
 
   // Only terms that start with a known promotional vocabulary word are
   // candidates — this prevents person names and company names from being learned.
-  _PROMO_VOCAB: /^(promoted|sponsored|recommended|suggested|partnership|patrocinado|sponsorisé|gesponsert|sponsorizzato|gesponsord|aanbevolen|recommandé|empfohlen|consigliato|sugerido)/i,
+  _PROMO_VOCAB: /^(promoted|sponsored|recommended|suggested|from your|partnership|patrocinado|sponsorisé|gesponsert|sponsorizzato|gesponsord|aanbevolen|recommandé|empfohlen|consigliato|sugerido|de tu|de votre|dalla tua|van jouw)/i,
 
   // In-memory cache — mutations are synchronous so concurrent observe() calls
   // always see each other's writes before the async save flushes.
@@ -724,7 +803,7 @@ const renderer = {
     unknown: 'Filtered',
   },
 
-  collapseItem(el, score, _reasons, category) {
+  collapseItem(el, score, _reasons, category, fingerprint) {
     try {
       if (el.getAttribute('data-lff-collapsed') === 'true') return;
       el.setAttribute('data-lff-collapsed', 'true');
@@ -753,6 +832,23 @@ const renderer = {
       scoreSpan.className = 'lff-strip-score';
       scoreSpan.textContent = `${pct}% match`;
 
+      // "Always show" — saves an allow override and restores the card in place
+      // without requiring the user to open the popup.
+      const allowBtn = document.createElement('button');
+      allowBtn.className = 'lff-strip-allow';
+      allowBtn.textContent = 'Always show';
+      allowBtn.setAttribute('aria-label', 'Always show this post');
+      allowBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (fingerprint) userLearning.setUserOverride(fingerprint, 'allow');
+        while (wrapper.firstChild) el.insertBefore(wrapper.firstChild, strip);
+        el.removeChild(wrapper);
+        el.removeChild(strip);
+        el.removeAttribute('data-lff-collapsed');
+        el.removeAttribute('data-lff-score');
+        el.removeAttribute('data-lff-category');
+      });
+
       const btn = document.createElement('button');
       btn.className = 'lff-strip-btn';
       btn.setAttribute('aria-label', 'Show filtered post');
@@ -773,6 +869,7 @@ const renderer = {
 
       strip.appendChild(labelSpan);
       strip.appendChild(scoreSpan);
+      strip.appendChild(allowBtn);
       strip.appendChild(btn);
 
       let expanded = false;
@@ -784,7 +881,8 @@ const renderer = {
         btn.style.transform = expanded ? 'rotate(180deg)' : '';
       });
 
-      el.appendChild(strip);
+      // Insert strip before wrapper so it stays at the top when expanded
+      el.insertBefore(strip, wrapper);
     } catch {
       // Non-fatal
     }
@@ -1166,8 +1264,9 @@ function processItem(el) {
     const matchedKeyword = matchesKeyword(el, currentConfig.hiddenKeywords);
     if (matchedKeyword) {
       const kwReasons = [`keyword match: "${matchedKeyword}"`];
+      const kwFingerprint = userLearning.generateFingerprint(el);
       if (currentConfig.collapseMode) {
-        renderer.collapseItem(el, 1.0, kwReasons, 'keyword');
+        renderer.collapseItem(el, 1.0, kwReasons, 'keyword', kwFingerprint);
       } else {
         renderer.hideItem(el, 1.0, kwReasons, 'keyword');
       }
@@ -1186,7 +1285,7 @@ function processItem(el) {
       const configKey = categoryToConfigKey(category);
       if (userOverride === 'hide' || currentConfig[configKey]) {
         if (currentConfig.collapseMode) {
-          renderer.collapseItem(el, score, reasons, category);
+          renderer.collapseItem(el, score, reasons, category, fingerprint);
         } else {
           renderer.hideItem(el, score, reasons, category);
         }
@@ -1256,6 +1355,18 @@ function injectStyles() {
       flex-shrink: 0;
     }
     .lff-strip-btn:hover { background: #e2e8f0; }
+    .lff-strip-allow {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 2px 6px;
+      font-size: 11px;
+      color: #0369a1;
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .lff-strip-allow:hover { background: #e0f2fe; text-decoration: underline; }
     .lff-card-content { overflow: hidden; }
   `;
   document.head.appendChild(style);
