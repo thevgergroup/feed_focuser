@@ -33,3 +33,4 @@ jobs:
           auth-api-issuer: ${{ secrets.MOZILLA_JWT_ISSUER }}
           auth-api-secret: ${{ secrets.MOZILLA_JWT_SECRET }}
           channel: listed
+          release-note: "v${{ github.event.inputs.version }} — see https://github.com/thevgergroup/feed_focuser/releases/tag/v${{ github.event.inputs.version }} for full changelog."
