@@ -26,7 +26,7 @@ jobs:
         run: npm run build
 
       - name: Submit to Firefox AMO (listed)
-        uses: browser-actions/release-firefox-addon@v1
+        uses: browser-actions/release-firefox-addon@v0.2.1
         with:
           addon-id: feedfocuser@thevgergroup.com
           addon-path: dist/feed-focuser-firefox.xpi
