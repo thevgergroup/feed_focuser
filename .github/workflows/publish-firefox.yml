@@ -28,6 +28,10 @@ jobs:
       - name: Install web-ext
         run: npm install -g web-ext
 
+      - name: Write AMO metadata
+        run: |
+          echo '{"version":{"release_notes":{"en-US":"v${{ github.event.inputs.version }} — see https://github.com/thevgergroup/feed_focuser/releases/tag/v${{ github.event.inputs.version }}"}}}' > amo-metadata.json
+
       - name: Submit to Firefox AMO via web-ext
         env:
           WEB_EXT_API_KEY: ${{ secrets.MOZILLA_JWT_ISSUER }}
@@ -40,4 +44,4 @@ jobs:
             --channel listed \
             --no-input \
             --timeout 0 \
-            --amo-metadata '{"version":{"release_notes":{"en-US":"v${{ github.event.inputs.version }} — see release notes at https://github.com/thevgergroup/feed_focuser/releases/tag/v${{ github.event.inputs.version }}"}}}'
+            --amo-metadata amo-metadata.json
