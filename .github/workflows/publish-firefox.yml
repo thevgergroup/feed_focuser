@@ -25,23 +25,117 @@ jobs:
       - name: Build artifacts
         run: npm run build
 
-      - name: Install web-ext
-        run: npm install -g web-ext
-
-      - name: Write AMO metadata
+      - name: Package source for AMO review
         run: |
-          echo '{"version":{"release_notes":{"en-US":"v${{ github.event.inputs.version }} — see https://github.com/thevgergroup/feed_focuser/releases/tag/v${{ github.event.inputs.version }}"}}}' > amo-metadata.json
+          zip -r dist/source.zip . \
+            --include "extension/*" \
+            --include "scripts/*" \
+            --include "tests/*" \
+            --include "package.json" \
+            --include "package-lock.json" \
+            --include "*.md"
 
-      - name: Submit to Firefox AMO via web-ext
+      - name: Submit new version to Firefox AMO (listed)
         env:
-          WEB_EXT_API_KEY: ${{ secrets.MOZILLA_JWT_ISSUER }}
-          WEB_EXT_API_SECRET: ${{ secrets.MOZILLA_JWT_SECRET }}
+          MOZILLA_JWT_ISSUER: ${{ secrets.MOZILLA_JWT_ISSUER }}
+          MOZILLA_JWT_SECRET: ${{ secrets.MOZILLA_JWT_SECRET }}
+          VERSION: ${{ github.event.inputs.version }}
         run: |
-          web-ext sign \
-            --source-dir extension/ \
-            --api-key "$WEB_EXT_API_KEY" \
-            --api-secret "$WEB_EXT_API_SECRET" \
-            --channel listed \
-            --no-input \
-            --timeout 0 \
-            --amo-metadata amo-metadata.json
+          node - <<'EOF'
+          const fs = require('fs');
+          const crypto = require('crypto');
+
+          const issuer = process.env.MOZILLA_JWT_ISSUER;
+          const secret = process.env.MOZILLA_JWT_SECRET;
+          const version = process.env.VERSION;
+          const addonId = 'feedfocuser@thevgergroup.com';
+          const xpiPath = 'dist/feed-focuser-firefox.xpi';
+          const sourcePath = 'dist/source.zip';
+
+          // Generate JWT
+          function makeJwt(issuer, secret) {
+            const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+            const now = Math.floor(Date.now() / 1000);
+            const payload = Buffer.from(JSON.stringify({ iss: issuer, jti: crypto.randomUUID(), iat: now, exp: now + 300 })).toString('base64url');
+            const sig = crypto.createHmac('sha256', secret).update(`${header}.${payload}`).digest('base64url');
+            return `${header}.${payload}.${sig}`;
+          }
+
+          async function main() {
+            const jwt = makeJwt(issuer, secret);
+
+            // Step 1: Upload XPI
+            console.log('Uploading XPI...');
+            const xpiData = fs.readFileSync(xpiPath);
+            const boundary = '----FormBoundary' + crypto.randomUUID().replace(/-/g, '');
+            const body = Buffer.concat([
+              Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="upload"; filename="extension.xpi"\r\nContent-Type: application/x-xpinstall\r\n\r\n`),
+              xpiData,
+              Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="channel"\r\n\r\nlisted\r\n--${boundary}--\r\n`)
+            ]);
+
+            const uploadRes = await fetch('https://addons.mozilla.org/api/v5/addons/upload/', {
+              method: 'POST',
+              headers: { 'Authorization': `JWT ${jwt}`, 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+              body
+            });
+            const upload = await uploadRes.json();
+            console.log('Upload response:', JSON.stringify(upload));
+            if (!upload.uuid) throw new Error('Upload failed: no UUID');
+
+            // Step 2: Poll until processed
+            console.log('Polling for validation...');
+            let valid = false;
+            for (let i = 0; i < 20; i++) {
+              await new Promise(r => setTimeout(r, 3000));
+              const pollJwt = makeJwt(issuer, secret);
+              const pollRes = await fetch(`https://addons.mozilla.org/api/v5/addons/upload/${upload.uuid}/`, {
+                headers: { 'Authorization': `JWT ${pollJwt}` }
+              });
+              const poll = await pollRes.json();
+              console.log(`Poll ${i+1}: valid=${poll.valid}, processed=${poll.processed}`);
+              if (poll.valid === true) { valid = true; break; }
+              if (poll.processed && poll.valid === false) { console.log('Validation errors:', JSON.stringify(poll.validation)); throw new Error('XPI failed validation'); }
+            }
+            if (!valid) throw new Error('Timed out waiting for validation');
+
+            // Step 3: Create version
+            console.log('Creating version...');
+            const versionJwt = makeJwt(issuer, secret);
+            const versionRes = await fetch(`https://addons.mozilla.org/api/v5/addons/addon/${addonId}/versions/`, {
+              method: 'POST',
+              headers: { 'Authorization': `JWT ${versionJwt}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                upload: upload.uuid,
+                release_notes: { 'en-US': `v${version} — see https://github.com/thevgergroup/feed_focuser/releases/tag/v${version}` }
+              })
+            });
+            const versionData = await versionRes.json();
+            console.log('Version response:', JSON.stringify(versionData));
+            if (!versionRes.ok) throw new Error(`Version creation failed: ${versionRes.status} ${JSON.stringify(versionData)}`);
+            const versionId = versionData.id;
+
+            // Step 4: Upload source code (required by Mozilla policy for extensions with build steps)
+            console.log('Uploading source code...');
+            const srcData = fs.readFileSync(sourcePath);
+            const srcBoundary = '----FormBoundary' + crypto.randomUUID().replace(/-/g, '');
+            const srcBody = Buffer.concat([
+              Buffer.from(`--${srcBoundary}\r\nContent-Disposition: form-data; name="source"; filename="source.zip"\r\nContent-Type: application/zip\r\n\r\n`),
+              srcData,
+              Buffer.from(`\r\n--${srcBoundary}--\r\n`)
+            ]);
+            const srcJwt = makeJwt(issuer, secret);
+            const srcRes = await fetch(`https://addons.mozilla.org/api/v5/addons/addon/${addonId}/versions/${versionId}/`, {
+              method: 'PATCH',
+              headers: { 'Authorization': `JWT ${srcJwt}`, 'Content-Type': `multipart/form-data; boundary=${srcBoundary}` },
+              body: srcBody
+            });
+            const srcData2 = await srcRes.json();
+            console.log('Source upload response:', JSON.stringify(srcData2));
+            if (!srcRes.ok) console.warn(`Source upload failed (non-fatal): ${srcRes.status} ${JSON.stringify(srcData2)}`);
+
+            console.log(`✅ Version ${version} submitted to AMO for review.`);
+          }
+
+          main().catch(e => { console.error(e); process.exit(1); });
+          EOF
