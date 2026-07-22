@@ -17,12 +17,14 @@ import { execSync } from 'child_process';
 
 // Chrome build — all extension files as-is
 const chromeZip = join(distDir, 'feed-focuser-chrome.zip');
-execSync(`cd "${root}" && zip -r "${chromeZip}" extension/ -x "*.DS_Store"`, { stdio: 'inherit' });
+try { execSync(`rm -f "${chromeZip}"`); } catch {}
+execSync(`cd "${root}" && zip -r "${chromeZip}" extension/ -x "*.DS_Store" -x "extension/.amo-upload-uuid"`, { stdio: 'inherit' });
 console.log(`✓ ${chromeZip}`);
 
-// Firefox build — XPI is a renamed ZIP; manifest already has gecko settings
+// Firefox build — XPI requires files at the root (not inside a subdirectory)
 const firefoxXpi = join(distDir, 'feed-focuser-firefox.xpi');
-execSync(`cd "${root}" && zip -r "${firefoxXpi}" extension/ -x "*.DS_Store"`, { stdio: 'inherit' });
+try { execSync(`rm -f "${firefoxXpi}"`); } catch {}
+execSync(`cd "${extDir}" && zip -r "${firefoxXpi}" . -x "*.DS_Store" -x ".amo-upload-uuid"`, { stdio: 'inherit' });
 console.log(`✓ ${firefoxXpi}`);
 
 console.log('\nBuild complete. Files in dist/');
