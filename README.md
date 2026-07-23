@@ -14,21 +14,32 @@ Read the [announcement post](https://thevgergroup.com/vger-for-good/feed-focuser
 
 ### Chrome / Edge / Brave
 
+**[Install from the Chrome Web Store](https://chromewebstore.google.com/detail/feed-focuser/genlmdcgkojkcphjnijmcpddgeafembh)**
+
+<details>
+<summary>Manual install (sideload)</summary>
+
 1. Go to the [Releases](https://github.com/thevgergroup/feed_focuser/releases) page and download `feed-focuser-chrome.zip`
 2. Unzip it anywhere on your computer
 3. Open Chrome and go to `chrome://extensions`
 4. Turn on **Developer mode** (top-right toggle)
 5. Click **Load unpacked** and select the unzipped `extension` folder
-6. Navigate to [linkedin.com/feed](https://www.linkedin.com/feed) — the extension starts immediately
+
+</details>
 
 ### Firefox
+
+**[Install from Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/fc14b4a7f7a544749e00/)**
+
+<details>
+<summary>Manual install (sideload)</summary>
 
 1. Go to the [Releases](https://github.com/thevgergroup/feed_focuser/releases) page and download `feed-focuser-firefox.xpi`
 2. Open Firefox and go to `about:addons`
 3. Click the gear icon → **Install Add-on From File…**
 4. Select the downloaded `.xpi` file
 
-> **Note:** Firefox requires the extension to be signed for permanent installation. For temporary use, go to `about:debugging` → **This Firefox** → **Load Temporary Add-on** and select the `.xpi` file.
+</details>
 
 ---
 
